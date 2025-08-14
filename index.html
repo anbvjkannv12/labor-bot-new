@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <title>勞資問答機器人</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input { width: 80%; padding: 8px; }
+    button { padding: 8px 12px; }
+    #answer { margin-top: 20px; padding: 10px; background: #f2f2f2; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>勞資問答機器人</h1>
+  <input id="question" placeholder="輸入你的問題">
+  <button onclick="ask()">送出</button>
+  <div id="answer"></div>
+
+  <script>
+    async function ask() {
+      const question = document.getElementById("question").value;
+      document.getElementById("answer").innerText = "思考中...";
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      document.getElementById("answer").innerText = data.answer;
+    }
+  </script>
+</body>
+</html>
