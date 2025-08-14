@@ -4,29 +4,135 @@
   <meta charset="utf-8">
   <title>勞資問答機器人</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    input { width: 80%; padding: 8px; }
-    button { padding: 8px 12px; }
-    #answer { margin-top: 20px; padding: 10px; background: #f2f2f2; border-radius: 5px; }
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #f0f4f8, #dbe9f4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header {
+      background: #1976d2;
+      color: white;
+      padding: 15px;
+      font-size: 1.2em;
+      font-weight: bold;
+      text-align: center;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      margin: 8px 0;
+      border-radius: 8px;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease;
+    }
+    .user-message {
+      background: #1976d2;
+      color: white;
+      align-self: flex-end;
+    }
+    .bot-message {
+      background: #f1f1f1;
+      align-self: flex-start;
+    }
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+    .chat-input input {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      font-size: 1em;
+      outline: none;
+    }
+    .chat-input button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input button:hover {
+      background: #125aa0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <h1>勞資問答機器人</h1>
-  <input id="question" placeholder="輸入你的問題">
-  <button onclick="ask()">送出</button>
-  <div id="answer"></div>
+  <div class="chat-container">
+    <div class="chat-header">💼 勞資問答機器人</div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input">
+      <input id="question" placeholder="輸入你的問題..." onkeypress="if(event.key==='Enter') ask()">
+      <button onclick="ask()">送出</button>
+    </div>
+  </div>
 
   <script>
+    const chatMessages = document.getElementById("chat-messages");
+
+    function addMessage(content, type) {
+      const msg = document.createElement("div");
+      msg.className = `message ${type}-message`;
+      msg.innerText = content;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
     async function ask() {
-      const question = document.getElementById("question").value;
-      document.getElementById("answer").innerText = "思考中...";
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
-      });
-      const data = await res.json();
-      document.getElementById("answer").innerText = data.answer;
+      const question = document.getElementById("question").value.trim();
+      if (!question) return;
+      addMessage(question, "user");
+      document.getElementById("question").value = "";
+
+      addMessage("思考中...", "bot");
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const lastBotMsg = chatMessages.querySelector(".bot-message:last-child");
+
+        if (!res.ok) {
+          const err = await res.json();
+          lastBotMsg.innerText = "❌ 錯誤：" + err.error;
+          return;
+        }
+
+        const data = await res.json();
+        lastBotMsg.innerText = data.answer;
+
+      } catch (error) {
+        const lastBotMsg = chatMessages.querySelector(".bot-message:last-child");
+        lastBotMsg.innerText = "❌ 無法連線到伺服器";
+      }
     }
   </script>
 </body>
