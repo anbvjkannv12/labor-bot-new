@@ -9,6 +9,7 @@ const qaData = [
   { question: "新制資遣費怎麼計算", answer: "依勞工退休金條例第12條第1項規定，每滿1年發給1/2個月之平均工資，未滿1年者，以比例計給；最高以發給6個月平均工資為限。" },
   { question: "加班費怎麼算", answer: "平日加班費為時薪1.33或1.66倍，休假日依法律計算。A勞工平均工資為30,000元，適用勞工退休金條例之工作年資為3年6個月15天，則新制資遣費計約53,125元。" },
   { question: "勞工可以拒絕加班嗎", answer: "勞工可在合理情況下拒絕加班，尤其超過法定上限或健康受影響時。" }
+  { question: "特休天數計算", answer: "6個月以上1年未滿者，3日。1年以上2年未滿者，7日。2年以上3年未滿者，10日。3年以上5年未滿者，每年14日。5年以上10年未滿者，每年15日。10年以上者，每1年加給1日，加至30日為止。" }
 ];
 
 export default async function handler(req, res) {
@@ -40,4 +41,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: error.message || "Server error" });
   }
 }
+
 
