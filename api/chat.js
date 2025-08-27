@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import stringSimilarity from "string-similarity";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -46,17 +47,17 @@ export default async function handler(req, res) {
     const { question } = req.body;
     if (!question) return res.status(400).json({ error: "Missing question" });
 
-    // 找到符合的 QA（忽略大小寫）
-    let relevantQA = qaData.find((q) =>
-      question.toLowerCase().includes(q.question.toLowerCase())
-    );
+    // --- 模糊比對 ---
+    const questions = qaData.map((q) => q.question);
+    const match = stringSimilarity.findBestMatch(question, questions);
+    const bestMatch =
+      match.bestMatch.rating > 0.5 ? qaData[match.bestMatchIndex] : null;
 
-    // 如果找到 QA → 提供參考資料
-    // 如果找不到 → 明確告知 AI 回覆「目前無相關資訊」
-    let context = relevantQA
-      ? `以下是參考資料：\n${relevantQA.question}\n${relevantQA.answer}`
+    let context = bestMatch
+      ? `以下是參考資料：\n${bestMatch.question}\n${bestMatch.answer}`
       : "沒有找到相關資料，請直接回覆「目前無相關資訊」。";
 
+    // --- 呼叫 OpenAI ---
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
