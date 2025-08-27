@@ -1,10 +1,19 @@
 import OpenAI from "openai";
 import stringSimilarity from "string-similarity";
+import dotenv from "dotenv";
+
+dotenv.config(); // 確保本地開發可讀取 .env
+
+// 初始化 OpenAI
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ 缺少 OPENAI_API_KEY，請在 .env 或部署平台環境變數中設定");
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// QA 資料
 const qaData = [
   {
     question: "資遣費應如何計算？",
@@ -17,13 +26,15 @@ const qaData = [
   // ... 其他 QA
 ];
 
+// API Route
 export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
+  try {
     const { question } = req.body;
+
     if (!question) {
       return res.status(400).json({ error: "Missing question" });
     }
@@ -54,11 +65,15 @@ export default async function handler(req, res) {
       ],
     });
 
-    const answer = completion.choices[0].message.content;
-
+    const answer = completion.choices[0]?.message?.content || "目前無相關資訊";
     res.status(200).json({ answer });
   } catch (error) {
-    console.error("OpenAI API Error:", error.response?.data || error.message);
-    res.status(500).json({ error: error.message || "Server error" });
+    console.error("OpenAI API Error:", error);
+    res.status(500).json({
+      error:
+        error.response?.data?.error?.message ||
+        error.message ||
+        "Server error",
+    });
   }
 }
