@@ -46,21 +46,24 @@ export default async function handler(req, res) {
     const { question } = req.body;
     if (!question) return res.status(400).json({ error: "Missing question" });
 
-    // 改進比對：直接忽略大小寫
+    // 找到符合的 QA（忽略大小寫）
     let relevantQA = qaData.find((q) =>
       question.toLowerCase().includes(q.question.toLowerCase())
     );
 
+    // 如果找到 QA → 提供參考資料
+    // 如果找不到 → 明確告知 AI 回覆「目前無相關資訊」
     let context = relevantQA
-      ? `以下是參考資料：${relevantQA.question} - ${relevantQA.answer}`
-      : "無相關資料，請依勞基法與常見勞資規範回答。";
+      ? `以下是參考資料：\n${relevantQA.question}\n${relevantQA.answer}`
+      : "沒有找到相關資料，請直接回覆「目前無相關資訊」。";
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "你是一個勞資專家，請依據參考資料回答問題。",
+          content:
+            "你是一個勞資專家。請嚴格依據提供的參考資料回答，不能自行發揮。如果沒有提供相關資料，請回覆「目前無相關資訊」。",
         },
         { role: "user", content: `${context}\n\n使用者的問題：${question}` },
       ],
@@ -72,4 +75,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: error.message || "Server error" });
   }
 }
-
